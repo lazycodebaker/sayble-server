@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createUser, getUser, getUsers, verifyUser } from "../controller/User";
+import { createUser, getUser, getUsers, loginUser, updateUsernameAndPassword, verifyUser } from "../controller/User";
 import { APIContextType, Options } from "../types";
 import app from "../app";
 import { settings } from "../config/settings";
@@ -8,7 +8,7 @@ const apiPrefix = settings.server.apiPrefix;
 
 export const UserRoutes = async (options: Options) => {
 
-    await app.post(`${apiPrefix}/users/create`, async (
+    await app.post(`${apiPrefix}/auth/create`, async (
         request: Request, response: Response
     ) => await createUser({
         request: request,
@@ -32,7 +32,6 @@ export const UserRoutes = async (options: Options) => {
         em: options.orm.em.fork()
     } as APIContextType));
     
-    
     await app.post(`${apiPrefix}/users/verify`, async (
         request: Request, response: Response
     ) => await verifyUser({
@@ -40,7 +39,22 @@ export const UserRoutes = async (options: Options) => {
         response: response,
         em: options.orm.em.fork()
     } as APIContextType));
+
+    await app.put(`${apiPrefix}/users/credentials`, async (
+        request: Request, response: Response
+    ) => await updateUsernameAndPassword({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
     
+    await app.post(`${apiPrefix}/auth/login`, async (
+        request: Request, response: Response
+    ) => await loginUser({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
 
 
 };
