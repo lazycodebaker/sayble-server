@@ -36,6 +36,7 @@ export class UserModel implements User {
             name: "username",
             type: "varchar",
             length: 255,
+            nullable: true
       })
       username!: string;
 
@@ -50,6 +51,7 @@ export class UserModel implements User {
             name: "password",
             type: "varchar",
             length: 255,
+            nullable: true
       })
       password!: string;
 
@@ -110,11 +112,9 @@ export class UserModel implements User {
       })
       updatedAt = new Date();
 
-      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt">) { 
-            this.id = v4();
-            this.username = user.username;
-            this.email = user.email;
-            this.setPassword(user.password); 
+      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt" | "password" | "username">) { 
+            this.id = v4(); 
+            this.email = user.email; 
             this.firstName = user.firstName;
             this.lastName = user.lastName;
             this.dob = user.dob;
@@ -131,6 +131,10 @@ export class UserModel implements User {
             // send the otp now 
             const otpGenerated = await otpGenerate();
             this.otp = otpGenerated;
+      };
+
+      async setUsername(username: string): Promise<void> {
+            this.username = username
       };
 
       async isUserVerified(): Promise<boolean> {

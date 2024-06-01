@@ -3,67 +3,6 @@ import { v4 } from 'uuid';
 import { UserModel } from '../models/User';
 import { APIContextType, User } from '../types';
 import { tokenVerify } from '../helpers/tokenVerify';
-8
-export const createUser = async ({ request, response, em }: APIContextType) => {
-      try {
-            const { firstName, lastName, username, email, password, dob } = request.body as User;
-
-            const userExists = await em.fork().findOne(UserModel, {
-                  $or: [
-                        { username: username },
-                        { email: email }
-                  ],
-            });
-
-
-            if (userExists) {
-                  //        logger.info(`User Already Exists - ${userExists}`)
-                  return {
-                        success: false,
-                        message: 'User Already Exists',
-                        extras: null,
-                        errorType: null
-                  }
-            };
-
-            const new_user = await new UserModel({
-                  firstName: firstName,
-                  lastName: lastName,
-                  email: email,
-                  password: password,
-                  username: username,
-                  dob: dob,
-                  image: ''
-            });
-
-            const token = await new_user.getToken();
-            await new_user.saveUser(em);
-            await new_user.sendMail('OTP');
-
-            //  logger.info(`User Created - ${new_user.id}`);
-
-            const context = {
-                  success: true,
-                  message: 'User Created Successfully',
-                  extras: new_user,
-                  token: token,
-                  errorType: null
-            };
-
-            return response.status(200).send(context);
-      }
-      catch (error) {
-            console.error('Error creating user:', error);
-
-            const context = {
-                  message: 'Error creating user',
-                  error: error,
-                  status: 500
-            };
-
-            return response.status(500).send(context);
-      };
-};
 
 export const getUsers = async ({ request, response, em }: APIContextType) => {
       try {
@@ -97,6 +36,64 @@ export const getUser = async ({ request, response, em }: APIContextType) => {
       }
 };
 
+export const createUser = async ({ request, response, em }: APIContextType) => {
+      try {
+            const { firstName, lastName, email, dob } = request.body as User;
+
+            const userExists = await em.fork().findOne(UserModel, {
+                  $or: [
+                        { email: email }
+                  ],
+            });
+
+            if (userExists) {
+                  //        logger.info(`User Already Exists - ${userExists}`)
+                  return {
+                        success: false,
+                        message: 'User Already Exists',
+                        extras: null,
+                        errorType: null
+                  }
+            };
+
+            const new_user = await new UserModel({
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                  dob: dob,
+                  image: ''
+            });
+
+            const token = await new_user.getToken();
+            await new_user.saveUser(em);
+            await new_user.sendMail('OTP');
+
+            //  logger.info(`User Created - ${new_user.id}`);
+
+            const context = {
+                  success: true,
+                  message: 'User Created Successfully',
+                  extras: new_user,
+                  token: token,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      }
+      catch (error) {
+            console.error('Error creating user:', error);
+
+            const context = {
+                  message: 'Error creating user',
+                  error: error,
+                  status: 500
+            };
+
+            return response.status(500).send(context);
+      };
+};
+
+
 export const verifyUser = async ({ request, response, em }: APIContextType) => {
       try {
             const { OTP } = request.body;
@@ -106,45 +103,53 @@ export const verifyUser = async ({ request, response, em }: APIContextType) => {
 
             if (!user_id) {
                   //   logger.info(`User Not Found - ${user_id}`);
-                  return {
+                  const context = {
                         success: false,
                         message: 'User Not Found',
                         extras: null,
                         errorType: null
                   };
+
+                  return response.status(200).send(context);
             };
 
             const user = await em.fork().findOne(UserModel, { id: user_id });
 
             if (!user) {
                   //    logger.info(`User Not Found - ${user_id}`);
-                  return {
+                  const context = {
                         success: false,
                         message: 'User Not Found',
                         extras: null,
                         errorType: null
                   };
+
+                  return response.status(200).send(context);
             };
 
             if (user.otp !== OTP) {
                   // logger.info(`OTP Not Match - ${OTP}`)
-                  return {
+                  const context = {
                         success: false,
                         message: 'OTP Not Match',
                         extras: null,
                         errorType: null
                   };
+
+                  return response.status(200).send(context);
             };
 
             if (user.isVerified) {
                   // logger.info(`User Already Verified - ${user.user_id}`)
-                  return {
+                  const context = {
                         success: true,
                         message: 'User Already Verified',
                         extras: user,
                         token: _token,
                         errorType: null
                   };
+
+                  return response.status(200).send(context);
             };
 
             await user.verifyUser();
@@ -154,19 +159,60 @@ export const verifyUser = async ({ request, response, em }: APIContextType) => {
             //  await user.sendMail("WELCOME");
             // logger.info(`User Verified - ${user.user_id}`);
 
-            return {
+            const context = {
                   success: true,
                   message: 'User Verified Successfully',
                   token: _token,
                   extras: user,
                   errorType: null,
             };
+
+            return response.status(200).send(context);
       }
       catch (error) {
             // logger.error(`User Verification Failed - ${error}`)
-            return {
+            const context = {
                   success: false,
                   message: 'User Verification Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
+export const updateUsernameAndPassword = async ({ request, response, em }: APIContextType) => {
+      try {
+            const { username, password } = request.body;
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            
+            const user_id = await tokenVerify(_token);
+            const user = await em.fork().findOne(UserModel, { id: user_id });
+
+            if (!user) {
+                  return {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+            };
+            
+            await user.setPassword(password);
+            await user.setUsername(username);
+            await user.saveUser(em); 
+
+            return {
+                  success: true,
+                  message: 'User Updated Successfully',
+                  extras: user,
+                  errorType: null
+            };
+      } catch (error) {
+            return {
+                  success: false,
+                  message: 'User Update Failed',
                   extras: null,
                   errorType: error as string
             };
