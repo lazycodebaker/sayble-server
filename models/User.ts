@@ -6,6 +6,7 @@ import otpGenerate from '../helpers/otpGenerate';
 import generateToken from '../helpers/generateToken';
 import { MailTemplate, sendMail } from '../services/mailSent';
 import { v4 } from 'uuid';
+import { verifyPassword } from '../helpers/verifyPassword';
 
 
 @Entity({ tableName: "User" })
@@ -112,15 +113,23 @@ export class UserModel implements User {
       })
       updatedAt = new Date();
 
-      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt" | "password" | "username">) { 
-            this.id = v4(); 
-            this.email = user.email; 
+      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt" | "password" | "username">) {
+            this.id = v4();
+            this.email = user.email;
             this.firstName = user.firstName;
             this.lastName = user.lastName;
             this.dob = user.dob;
             this.image = user.image;
             this.createdAt = new Date();
             this.updatedAt = new Date();
+      };
+
+      async setOTP(): Promise<void> {
+            const { hash, salt } = await hashGenerate(this.firstName + this.lastName);
+            const otpGenerated = await otpGenerate();
+            this.otp = otpGenerated;
+            this.salt = salt;
+            this.password = hash;
       };
 
       async setPassword(password: string): Promise<void> {
@@ -169,12 +178,19 @@ export class UserModel implements User {
             return token;
       };
 
-      async sendMail(mailType: MailTemplate): Promise<void> {
-            await sendMail({
-                  mailType : "OTP",
-                  otp : this.otp,
-                  to : this.email
+      async verifyPassword(password: string): Promise<boolean> {
+            const passwordVerified = await verifyPassword({
+                  password: password,
+                  user: this
             });
+            return passwordVerified;
       };
 
+      async sendMail(mailType: MailTemplate): Promise<void> {
+            await sendMail({
+                  mailType: "OTP",
+                  otp: this.otp,
+                  to: this.email
+            });
+      };
 };

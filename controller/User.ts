@@ -48,12 +48,14 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
 
             if (userExists) {
                   //        logger.info(`User Already Exists - ${userExists}`)
-                  return {
+                  const context = {
                         success: false,
                         message: 'User Already Exists',
                         extras: null,
                         errorType: null
-                  }
+                  };
+
+                  return response.status(200).send(context);
             };
 
             const new_user = await new UserModel({
@@ -65,6 +67,7 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
             });
 
             const token = await new_user.getToken();
+            await new_user.setOTP();
             await new_user.saveUser(em);
             await new_user.sendMail('OTP');
 
@@ -186,7 +189,7 @@ export const updateUsernameAndPassword = async ({ request, response, em }: APICo
       try {
             const { username, password } = request.body;
             const _token = request.headers.authorization?.split(" ")[1] || "";
-            
+
             const user_id = await tokenVerify(_token);
             const user = await em.fork().findOne(UserModel, { id: user_id });
 
@@ -198,23 +201,114 @@ export const updateUsernameAndPassword = async ({ request, response, em }: APICo
                         errorType: null
                   };
             };
-            
+
             await user.setPassword(password);
             await user.setUsername(username);
-            await user.saveUser(em); 
+            await user.saveUser(em);
 
-            return {
+            const context = {
                   success: true,
                   message: 'User Updated Successfully',
                   extras: user,
                   errorType: null
             };
+
+            return response.status(200).send(context);
       } catch (error) {
-            return {
+            const context = {
                   success: false,
                   message: 'User Update Failed',
                   extras: null,
                   errorType: error as string
             };
+
+            return response.status(200).send(context);
+      };
+};
+
+export const loginUser = async ({ request, response, em }: APIContextType) => {
+      try {
+            const { username, password } = request.body;
+
+            const user = await em.fork().findOne(UserModel, {
+                  username: username
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            const token = await user.getToken();
+
+            const passwordMatch = await user.verifyPassword(password);
+
+            if (!passwordMatch) {
+                  const context = {
+                        success: false,
+                        message: 'Password Not Match',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            if (!(await user.isUserVerified())) {
+                  // logger.info(`User Not Verified - ${user.username}`)
+                  const context = {
+                        success: false,
+                        message: 'User Not Verified, Please Verify Your Email',
+                        extras: user,
+                        errorType: null,
+                        token: token
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            if (await user.isUserLoggedin()) {
+                  //  logger.info(`User Already Logged In - ${user.username}`)
+                  const context = {
+                        success: true,
+                        message: 'User Already Logged In',
+                        extras: user,
+                        token: token,
+                        errorType: null,
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+
+            await user.loginUser();
+            await user.saveUser(em);
+
+            //logger.info(`User Logged In - ${user.username}`);
+
+            const context = {
+                  success: true,
+                  message: 'User Logged In Successfully',
+                  extras: user,
+                  token: token,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'User Login Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
       };
 };
