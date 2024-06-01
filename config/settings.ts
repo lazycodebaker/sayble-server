@@ -14,9 +14,9 @@ dotenv.config();
 
 export const settings: Settings = {
       // General application settings
-      APPNAME: 'Cnoversa',
+      APPNAME: 'Sayble',
 
-      password: "123",
+     // password: "123",
 
       // Server settings
       server: {

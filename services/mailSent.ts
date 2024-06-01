@@ -34,7 +34,7 @@ const sendMail = async ({ to, mailType, ...props }: SendMailProps) => {
             updatedHtmlContent = updatedHtmlContent.replace(/{{COMPANYNAME}}/g, settings.APPNAME);
 
             const mailOptions: SendMailOptions = {
-                  from: 'anshumantiwaridec@gmail.com',
+                  from: settings.mail.SMTP_USER,
                   to,
                   subject: `Mail Subject for ${settings.APPNAME}`,  
                   html: updatedHtmlContent,
@@ -48,8 +48,8 @@ const sendMail = async ({ to, mailType, ...props }: SendMailProps) => {
                   port: 587,
                   secure: false,
                   auth: {
-                        user: 'anshumantiwaridec@gmail.com',
-                        pass: 'unfd idnx lhju eldm',
+                        user: settings.mail.SMTP_USER,
+                        pass: settings.mail.SMTP_PASS
                   },
             });
 
