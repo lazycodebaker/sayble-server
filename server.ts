@@ -18,7 +18,7 @@ const startServer = async (): Promise<void> => {
                   options.syncModels()
                   options.testConnection() 
                   // options.createTables()
-                  options.orm.migrator.createMigration()
+                  // options.orm.migrator.createMigration()
 
                   await Routes(options);
             });

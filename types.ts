@@ -4,13 +4,14 @@ import { CorsOptions } from 'cors';
 import { EntityManager, SqlEntityManager, SqliteDriver } from '@mikro-orm/sqlite';
 import { SqliteMikroORM } from '@mikro-orm/sqlite/SqliteMikroORM';
 
-export type ContextType = {
+export interface TContext {
       request: Request
-      response: Response
-};
+      response: Response,
+      em: SqlEntityManager<SqliteDriver> & EntityManager<any>
+}
 
 export type Settings = {
-      appName: string;
+      APPNAME: string;
       password: string;
       server: {
             port: number;
@@ -21,6 +22,15 @@ export type Settings = {
             path: string;
             migrationsPath: string;
       };
+      auth: {
+            JWT_SECRET: string;
+      };
+      mail: {
+            SMTP_HOST: string;
+            SMTP_PORT: number;
+            SMTP_USER: string;
+            SMTP_PASS: string;
+      };
 };
 
 export type User = {
@@ -30,6 +40,12 @@ export type User = {
       username : string;
       email: string;
       password: string;
+      image : string;
+      dob : Date;
+      otp : string;
+      isVerified : boolean;
+      isLoggedIn : boolean;
+      salt : string;
       createdAt: Date;
       updatedAt: Date;
 };
