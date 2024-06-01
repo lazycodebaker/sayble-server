@@ -12,7 +12,7 @@ export interface TContext {
 
 export type Settings = {
       APPNAME: string;
-      password: string;
+     // password: string;
       server: {
             port: number;
             apiPrefix: string;
