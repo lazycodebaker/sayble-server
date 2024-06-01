@@ -70,7 +70,7 @@
           "primary": false,
           "nullable": false,
           "length": 0,
-          "default": "1717229950414",
+          "default": "1717232112068",
           "mappedType": "datetime"
         },
         "image": {
@@ -129,7 +129,7 @@
           "primary": false,
           "nullable": false,
           "length": 0,
-          "default": "1717229950416",
+          "default": "1717232112069",
           "mappedType": "datetime"
         },
         "updated_at": {
@@ -140,7 +140,7 @@
           "primary": false,
           "nullable": false,
           "length": 0,
-          "default": "1717229950416",
+          "default": "1717232112069",
           "mappedType": "datetime"
         }
       },
