@@ -31,7 +31,7 @@ export const UserRoutes = async (options: Options) => {
         response: response,
         em: options.orm.em.fork()
     } as APIContextType));
-    
+
     await app.post(`${apiPrefix}/users/verify`, async (
         request: Request, response: Response
     ) => await verifyUser({
@@ -47,10 +47,18 @@ export const UserRoutes = async (options: Options) => {
         response: response,
         em: options.orm.em.fork()
     } as APIContextType));
-    
+
     await app.post(`${apiPrefix}/auth/login`, async (
         request: Request, response: Response
     ) => await loginUser({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
+
+    await app.get(`${apiPrefix}/users/:id`, async (
+        request: Request, response: Response
+    ) => await getUser({
         request: request,
         response: response,
         em: options.orm.em.fork()
