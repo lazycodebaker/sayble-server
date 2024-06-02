@@ -2,6 +2,8 @@
 import { UserModel } from '../models/User';
 import { APIContextType, User } from '../types';
 import { tokenVerify } from '../helpers/tokenVerify';
+import path from 'path';
+import fs from 'fs';
 import { expr } from '@mikro-orm/core';
 
 export const getUsers = async ({ request, response, em }: APIContextType) => {
@@ -46,7 +48,7 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
                   ],
             });
 
-            if (userExists) {
+            if (userExists && userExists.isVerified) {
                   //        logger.info(`User Already Exists - ${userExists}`)
                   const context = {
                         success: false,
@@ -62,15 +64,21 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
 
             const temp_password = firstName.at(0)! + lastName.at(0)! + Math.random().toString(36).substring(2, 10);
 
-            const new_user = await new UserModel({
-                  firstName: firstName,
-                  lastName: lastName,
-                  email: email,
-                  dob: dob,
-                  image: '',
-                  username: email_username,
-                  password: temp_password
-            });
+            let new_user = {} as UserModel;
+
+            if (!userExists) {
+                  new_user = await new UserModel({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        dob: dob,
+                        image: '',
+                        username: email_username,
+                        password: temp_password
+                  });
+            } else {
+                  new_user = userExists
+            };
 
             const token = await new_user.getToken();
             // await new_user.setOTP();
@@ -320,6 +328,49 @@ export const loginUser = async ({ request, response, em }: APIContextType) => {
       };
 };
 
+export const logoutUser = async ({ request, response, em }: APIContextType) => {
+      try {
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            const user_id = await tokenVerify(_token);
+
+            const user = await em.fork().findOne(UserModel, {
+                  id: user_id
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            await user.logoutUser();
+            await user.saveUser(em);
+
+            const context = {
+                  success: true,
+                  message: 'User Logged Out Successfully',
+                  extras: user,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'User Logout Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
 export const resendOTP = async ({ request, response, em }: APIContextType) => {
       try {
             const _token = request.headers.authorization?.split(" ")[1] || "";
@@ -476,6 +527,116 @@ export const resetPassword = async ({ request, response, em }: APIContextType) =
             const context = {
                   success: false,
                   message: 'Password Reset Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
+
+export const updateProfileImage = async ({ request, response, em }: APIContextType) => {
+      try {
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            const user_id = await tokenVerify(_token);
+
+            const file_extension = request.body.file_extension;
+
+            const image_base64 = request.body.image;
+
+            // Decode base64 string
+            const imageBuffer = await Buffer.from(image_base64, 'base64');
+
+            const uploadsDir = path.join(__dirname, '..', 'uploads');
+
+            if (!fs.existsSync(uploadsDir)) {
+                  fs.mkdirSync(uploadsDir);
+            };
+
+            // Generate a unique filename
+            const filename = `${user_id}_${Date.now()}.` + `${file_extension}`;
+            const filepath = path.join(__dirname, '..', 'uploads', filename);
+
+            // Write the image to the filesystem
+            await fs.writeFileSync(filepath, imageBuffer);
+
+            const user = await em.fork().findOne(UserModel, {
+                  id: user_id
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            const imageUrl = `${request.protocol}://${request.get('host')}/uploads/${filename}`;
+
+            user.image = filename;
+            await user.saveUser(em);
+
+            const context = {
+                  success: true,
+                  message: 'Profile Image Updated Successfully',
+                  extras: imageUrl,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'User Not Found',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+}; 
+
+export const getUserFromToken = async ({ request, response, em }: APIContextType) => {
+      try {
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            const user_id = await tokenVerify(_token);
+
+            const user = await em.fork().findOne(UserModel, {
+                  id: user_id
+            });
+
+            const imageUrl = `${request.protocol}://${request.get('host')}/uploads/${user?.image}`;
+            user!.image = imageUrl;
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };    
+
+            const context = {
+                  success: true,
+                  message: 'User Found',
+                  extras: user,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'User Not Found',
                   extras: null,
                   errorType: error as string
             };

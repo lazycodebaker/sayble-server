@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createUser, forgotPassword, getUser, getUsers, loginUser, resendOTP, resetPassword, updateUsernameAndPassword, verifyUser } from "../controller/User";
+import { createUser, forgotPassword, getUser, getUserFromToken, getUsers, loginUser, logoutUser, resendOTP, resetPassword, updateProfileImage, updateUsernameAndPassword, verifyUser } from "../controller/User";
 import { APIContextType, Options } from "../types";
 import app from "../app";
 import { settings } from "../config/settings";
@@ -11,6 +11,14 @@ export const UserRoutes = async (options: Options) => {
     await app.post(`${apiPrefix}/auth/create`, async (
         request: Request, response: Response
     ) => await createUser({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
+
+    await app.get(`${apiPrefix}/user/current`, async (
+        request: Request, response: Response
+    ) => await getUserFromToken({
         request: request,
         response: response,
         em: options.orm.em.fork()
@@ -56,6 +64,14 @@ export const UserRoutes = async (options: Options) => {
         em: options.orm.em.fork()
     } as APIContextType));
 
+    await app.post(`${apiPrefix}/auth/logout`, async (
+        request: Request, response: Response
+    ) => await logoutUser({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
+
     await app.get(`${apiPrefix}/users/:id`, async (
         request: Request, response: Response
     ) => await getUser({
@@ -71,7 +87,7 @@ export const UserRoutes = async (options: Options) => {
         response: response,
         em: options.orm.em.fork()
     } as APIContextType));
- 
+
     app.post(`${apiPrefix}/auth/forgotpassword`, async (
         request: Request, response: Response
     ) => await forgotPassword({
@@ -83,6 +99,14 @@ export const UserRoutes = async (options: Options) => {
     app.post(`${apiPrefix}/auth/resetpassword`, async (
         request: Request, response: Response
     ) => await resetPassword({
+        request: request,
+        response: response,
+        em: options.orm.em.fork()
+    } as APIContextType));
+
+    app.post(`${apiPrefix}/user/profile/image`, async (
+        request: Request, response: Response
+    ) => await updateProfileImage({
         request: request,
         response: response,
         em: options.orm.em.fork()

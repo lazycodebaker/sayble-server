@@ -12,9 +12,7 @@ export const tokenVerify = (token: string): string => {
 
       jwt.verify(token, settings.auth.JWT_SECRET as string, (err: any, decoded: any) => {
             if (err) console.log(err)
-            user_id = decoded?.user_id
-
-            console.log("decoded", decoded)
+            user_id = decoded?.user_id;
       })
 
      //  logger.info(`Token verification for ${user_id}`)
