@@ -113,7 +113,7 @@ export class UserModel implements User {
       })
       updatedAt = new Date();
 
-      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt" | "password" | "username">) {
+      constructor(user: Omit<User, "id" | "otp" | "isVerified" | "isLoggedIn" | "salt" | "createdAt" | "updatedAt">) {
             this.id = v4();
             this.email = user.email;
             this.firstName = user.firstName;
@@ -122,6 +122,8 @@ export class UserModel implements User {
             this.image = user.image;
             this.createdAt = new Date();
             this.updatedAt = new Date();
+            this.username = user.username;
+            this.setPassword(user.password);
       };
 
       async setOTP(): Promise<void> {

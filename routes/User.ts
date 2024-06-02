@@ -32,7 +32,7 @@ export const UserRoutes = async (options: Options) => {
         em: options.orm.em.fork()
     } as APIContextType));
 
-    await app.post(`${apiPrefix}/users/verify`, async (
+    await app.post(`${apiPrefix}/auth/verify`, async (
         request: Request, response: Response
     ) => await verifyUser({
         request: request,

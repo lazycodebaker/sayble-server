@@ -1,4 +1,4 @@
- 
+
 import { UserModel } from '../models/User';
 import { APIContextType, User } from '../types';
 import { tokenVerify } from '../helpers/tokenVerify';
@@ -57,16 +57,22 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
                   return response.status(200).send(context);
             };
 
+            const email_username = email.split('@')[0];
+
+            const temp_password = firstName.at(0)! + lastName.at(0)! + Math.random().toString(36).substring(2, 10);
+
             const new_user = await new UserModel({
                   firstName: firstName,
                   lastName: lastName,
                   email: email,
                   dob: dob,
-                  image: ''
+                  image: '',
+                  username: email_username,
+                  password: temp_password
             });
 
             const token = await new_user.getToken();
-            await new_user.setOTP();
+            // await new_user.setOTP();
             await new_user.saveUser(em);
             await new_user.sendMail('OTP');
 
@@ -77,7 +83,8 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
                   message: 'User Created Successfully',
                   extras: new_user,
                   token: token,
-                  errorType: null
+                  errorType: null,
+                  password : `Your password is ${temp_password}`
             };
 
             return response.status(200).send(context);
