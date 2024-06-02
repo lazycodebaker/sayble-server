@@ -2,6 +2,7 @@
 import { UserModel } from '../models/User';
 import { APIContextType, User } from '../types';
 import { tokenVerify } from '../helpers/tokenVerify';
+import { expr } from '@mikro-orm/core';
 
 export const getUsers = async ({ request, response, em }: APIContextType) => {
       try {
@@ -84,7 +85,7 @@ export const createUser = async ({ request, response, em }: APIContextType) => {
                   extras: new_user,
                   token: token,
                   errorType: null,
-                  password : `Your password is ${temp_password}`
+                  password: `Your password is ${temp_password}`
             };
 
             return response.status(200).send(context);
@@ -311,6 +312,170 @@ export const loginUser = async ({ request, response, em }: APIContextType) => {
             const context = {
                   success: false,
                   message: 'User Login Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
+export const resendOTP = async ({ request, response, em }: APIContextType) => {
+      try {
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            const user_id = await tokenVerify(_token);
+
+            const user = await em.fork().findOne(UserModel, {
+                  id: user_id
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            if (await user.isUserVerified()) {
+                  const context = {
+                        success: false,
+                        message: 'User Already Verified',
+                        extras: user,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            if (await user.isUserLoggedin()) {
+                  const context = {
+                        success: false,
+                        message: 'User Already Logged In',
+                        extras: user,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            await user.resendOTP();
+            await user.sendMail("OTP");
+            await user.saveUser(em);
+
+            const context = {
+                  success: true,
+                  message: 'OTP Sent Successfully',
+                  extras: user,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'OTP Resend Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
+
+export const forgotPassword = async ({ request, response, em }: APIContextType) => {
+      try {
+            const { email } = request.body;
+            const user = await em.fork().findOne(UserModel, {
+                  email: email
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            await user.resendOTP();
+            await user.sendMail("PASSWORDCHANGED");
+            await user.saveUser(em);
+
+            const context = {
+                  success: true,
+                  message: 'Password Reset Email Sent Successfully',
+                  extras: user,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'Password Reset Failed',
+                  extras: null,
+                  errorType: error as string
+            };
+
+            return response.status(200).send(context);
+      };
+};
+
+export const resetPassword = async ({ request, response, em }: APIContextType) => {
+      try {
+            const { password } = request.body;
+            const _token = request.headers.authorization?.split(" ")[1] || "";
+            const user_id = await tokenVerify(_token);
+
+            const user = await em.fork().findOne(UserModel, {
+                  id: user_id
+            });
+
+            if (!user) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Found',
+                        extras: null,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            if (!(await user.isUserVerified())) {
+                  const context = {
+                        success: false,
+                        message: 'User Not Verified',
+                        extras: user,
+                        errorType: null
+                  };
+
+                  return response.status(200).send(context);
+            };
+
+            await user.setPassword(password);
+            await user.saveUser(em);
+
+            const context = {
+                  success: true,
+                  message: 'Password Reset Successfully',
+                  extras: user,
+                  errorType: null
+            };
+
+            return response.status(200).send(context);
+      } catch (error) {
+            const context = {
+                  success: false,
+                  message: 'Password Reset Failed',
                   extras: null,
                   errorType: error as string
             };

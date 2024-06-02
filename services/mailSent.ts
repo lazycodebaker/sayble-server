@@ -2,19 +2,19 @@ import nodemailer, { SendMailOptions } from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import { settings } from '../config/settings';
- 
+
 const MailType = {
       OTP: 'OTP.html',
       // WELCOME: 'WELCOME.html',
-      // PASSWORDCHANGED: 'PASSWORDCHANGED.html',
+      PASSWORDCHANGED: 'PASSWORDCHANGED.html',
 } as const;
 
 export type MailTemplate = keyof typeof MailType;
 
 export type MailPropsMap = {
-      OTP: { otp: string };
+      OTP: { otp: string, firstname: string, username: string, password: string };
       WELCOME: { username: string };
-      PASSWORDCHANGED: { username: string };
+      PASSWORDCHANGED: { otp: string, firstname: string };
 };
 
 type SendMailProps = {
@@ -36,7 +36,7 @@ const sendMail = async ({ to, mailType, ...props }: SendMailProps) => {
             const mailOptions: SendMailOptions = {
                   from: settings.mail.SMTP_USER,
                   to,
-                  subject: `Mail Subject for ${settings.APPNAME}`,  
+                  subject: `Mail Subject for ${settings.APPNAME}`,
                   html: updatedHtmlContent,
                   date: new Date(),
                   encoding: 'utf8',

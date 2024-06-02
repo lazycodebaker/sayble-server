@@ -98,6 +98,13 @@ export class UserModel implements User {
       salt!: string;
 
       @Property({
+            name: "temp_password",
+            type: "varchar",
+            length: 255,
+      })
+      temp_password!: string;
+
+      @Property({
             name: "createdAt",
             type: "date",
             default: Date.now(),
@@ -134,7 +141,13 @@ export class UserModel implements User {
             this.password = hash;
       };
 
+      async resendOTP(): Promise<void> {
+            const otpGenerated = await otpGenerate();
+            this.otp = otpGenerated;
+      };
+
       async setPassword(password: string): Promise<void> {
+            this.temp_password = password;
             const { hash, salt } = await hashGenerate(password);
             this.password = hash;
             this.salt = salt;
@@ -190,9 +203,12 @@ export class UserModel implements User {
 
       async sendMail(mailType: MailTemplate): Promise<void> {
             await sendMail({
-                  mailType: "OTP",
+                  mailType: mailType,
                   otp: this.otp,
-                  to: this.email
+                  to: this.email,
+                  firstname: this.firstName,
+                  password: this.temp_password,
+                  username: this.username
             });
       };
 };
