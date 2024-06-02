@@ -87,7 +87,5 @@ export const UserRoutes = async (options: Options) => {
         response: response,
         em: options.orm.em.fork()
     } as APIContextType));
-
-
 };
 
