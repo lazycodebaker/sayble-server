@@ -36,7 +36,7 @@ const sendMail = async ({ to, mailType, ...props }: SendMailProps) => {
             const mailOptions: SendMailOptions = {
                   from: settings.mail.SMTP_USER,
                   to,
-                  subject: `Mail Subject for ${settings.APPNAME}`,
+                  subject: `One-time password for ${settings.APPNAME}`,
                   html: updatedHtmlContent,
                   date: new Date(),
                   encoding: 'utf8',
