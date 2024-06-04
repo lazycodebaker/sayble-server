@@ -26,6 +26,11 @@ export const getUser = async ({ request, response, em }: APIContextType) => {
       try {
             const { id } = request.params;
             const user = await em.findOne(UserModel, { id: id });
+
+            const image_url = `${request.protocol}://${request.get('host')}/uploads/${user?.image}`;
+
+            user!.image = image_url;
+
             return response.status(200).send(user);
       } catch (error) {
             console.error('Error getting user:', error);
