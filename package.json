@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec ts-node index.ts",
+    "start": "nodemon --exec ts-node ./public/index.js",
+    "build" : "tsc",
     "migration": "npx mikro-orm migration:create",
     "migration-initial": "npx mikro-orm migration:create --initial",
     "migration-up": "npx mikro-orm migration:up",
@@ -28,7 +29,8 @@
     "otp-generator": "^4.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "vercel": "^37.6.3"
   },
   "devDependencies": {
     "@mikro-orm/cli": "^5.9.8",
