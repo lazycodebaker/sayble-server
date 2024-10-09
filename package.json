@@ -6,6 +6,7 @@
   "scripts": {
     "start": "nodemon --exec ts-node ./public/index.js",
     "build" : "tsc",
+    "dev" : "nodemon --exec ts-node index.ts",
     "migration": "npx mikro-orm migration:create",
     "migration-initial": "npx mikro-orm migration:create --initial",
     "migration-up": "npx mikro-orm migration:up",
